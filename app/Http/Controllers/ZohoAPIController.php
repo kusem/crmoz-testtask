@@ -8,10 +8,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\Mime\Part\Multipart\FormDataPart;
 
 class ZohoAPIController extends Controller
 {
@@ -20,6 +16,7 @@ class ZohoAPIController extends Controller
      * @var JsonResponse|mixed
      */
     private mixed $accessToken;
+    private string $header; //auth header for API
 
     /**
      * Creates access Token before entering to endpoint.
@@ -27,7 +24,7 @@ class ZohoAPIController extends Controller
     function __construct()
     {
         if (session()->missing('zohoRefreshToken')) {
-            if (session()->exists('zohoExpiresAt') and Carbon::now()->addHour()->lt(session('zohoExpiresAt'))) {
+            if (session()->exists('zohoExpiresAt') and Carbon::now()->addHour()->gt(session('zohoExpiresAt'))) {
                 $this->refreshAccessToken();
             } else {
                 $loginTry = $this->doZohoLogin();
@@ -40,18 +37,24 @@ class ZohoAPIController extends Controller
         } else {
             $this->accessToken = session()->get('zohoAccessToken');
         }
+        $this->header = 'Zoho-oauthtoken ' . $this->accessToken;
     }
 
-    public function refreshAccessToken()
+    /**
+     * Refreshing access token
+     *
+     * @return JsonResponse
+     */
+    public function refreshAccessToken(): JsonResponse
     {
         $url = 'https://accounts.zoho.com/oauth/v2/token?refresh_token=' . session('zohoRefreshToken') .
             '&client_id=' . env('ZOHO_API_CLIENT_ID') . '&client_secret=' . env('ZOHO_API_CLIENT_SECRET') .
             '&grant_type=refresh_token';
-//dd($url);
         $response = Http::post($url);
         if ($response->json()['access_token']) {
             session(['zohoAccessToken' => $response->json()['access_token']]);
             session(['zohoExpiresAt' => Carbon::now()->addHour()]);
+            session()->save();
 
             return response()->json(
                 [
@@ -151,24 +154,141 @@ class ZohoAPIController extends Controller
         );
     }
 
-    public function getContacts()
+    /**
+     * Add contact with optional POST params: company, First_Name, Last_Name, Email, State
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addContact(Request $request): JsonResponse
     {
-        $url = session('zohoApiDomain') . '/crm/v3/settings/modules';
+        $url = session('zohoApiDomain') . '/crm/v3/Contacts';
         $http = new Client();
 
-        //dd(session()->all());
-        //dd($this->accessToken);
-        $header = 'Authorization: Zoho-oauthtoken ' . $this->accessToken;
+        $request->has('company') ?: $request->company = "FOP";
+        $request->has('First_Name') ?: $request->First_Name = rand(0, 6) . "Vladik" . rand(0, 10);
+        $request->has('Last_Name') ?: $request->Last_Name = rand(0, 6) . "Kuzya" . rand(0, 10);
+        $request->has('Email') ?: $request->Email = rand(0, 6) . "kuzya@" . rand(0, 10) . ".ua";
+        $request->has('State') ?: $request->State = "Kyiv";
+
         try {
-            $response = $http->get($url, ['headers' => [$header]]);
+            $response = $http->post(
+                $url,
+                [
+                    'headers' => [
+                        'Authorization' => $this->header,
+                    ],
+                    'body' => json_encode(
+                        [
+                            'data' => [
+                                [
+                                    "Company" => $request->company,
+                                    "Last_Name" => $request->Last_Name,
+                                    "First_Name" => $request->First_Name,
+                                    "Email" => $request->Email,
+                                    "State" => $request->State,
+                                ],
+                            ],
+                        ]
+                    ),
+                ]
+            );
         } catch (GuzzleException $e) {
-            dd($e);
+            return response()->json(
+                [
+                    'status' => 0,
+                    'message' => $e->getMessage(),
+                    'raw_request' => $request->query(),
+                ]
+            );
         }
-        dd($response);
-        $response = Http::dd()->withHeaders([$header])->get($url);
 
-        //print_r($response->body());
+        $newUserID = json_decode($response->getBody()->getContents())->data[0]->details->id;
+        $ownerID = json_decode($response->getBody()->getContents())->data[0]->details->Created_By->id;
+        session(['lastAddedNewUserID' => $newUserID]);
+        session(['ownerID' => $ownerID]);
+        session()->save();
 
-        return $response->json();
+        return response()->json(
+            [
+                'status' => 1,
+                'message' => json_decode($response->getBody()),
+                'new_user_id' => $newUserID,
+            ]
+        );
     }
+
+    /**
+     * Add contact with optional POST params: company, First_Name, Last_Name, Email, State
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addDeal(Request $request): JsonResponse
+    {
+        $url = session('zohoApiDomain') . '/crm/v3/Deals';
+        $http = new Client();
+
+        session()->exists('lastAddedNewUserID') ? $contactUserID = session(
+            'lastAddedNewUserID'
+        ) : $contactUserID = '5579542000000407271';
+        session()->exists('ownerID') ? $ownerID = session(
+            'ownerID'
+        ) : $ownerID = '5579542000000397001';
+
+        $request->has('Owner') ?: $request->Owner = $ownerID;
+        $request->has(
+            'Description'
+        ) ?: $request->Description = "You definitely should hire Vlad Kuzmenko so he can grow in your team.";
+        $request->has('Contact_Name') ?: $request->Contact_Name = $contactUserID;
+        $request->has('Deal_Name') ?: $request->Deal_Name = "Best project in da life";
+        $request->has('Stage') ?: $request->Stage = "Needs Analysis";
+
+        try {
+            $response = $http->post(
+                $url,
+                [
+                    'headers' => [
+                        'Authorization' => $this->header,
+                    ],
+                    'body' => json_encode(
+                        [
+                            'data' => [
+                                [
+                                    "Owner" => [
+                                        "id" => $request->Owner,
+                                    ],
+                                    "Description" => $request->Description,
+                                    "Contact_Name" => [
+                                        'id' => $request->Contact_Name,
+                                    ],
+                                    "Deal_Name" => $request->Deal_Name,
+                                    "Stage" => $request->Deal_Name,
+                                ],
+                            ],
+                        ]
+                    ),
+                ]
+            );
+        } catch (GuzzleException $e) {
+            return response()->json(
+                [
+                    'status' => 0,
+                    'message' => $e->getMessage(),
+                    'raw_request' => $request->query(),
+                ]
+            );
+        }
+
+        //session(['lastAddedNewUserID' => json_decode($response->getBody()->getContents())->data[0]->details->id]);
+
+        return response()->json(
+            [
+                'status' => 1,
+                'message' => json_decode($response->getBody()->getContents()),
+            ]
+        );
+    }
+
+
 }

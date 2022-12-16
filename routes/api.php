@@ -20,6 +20,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::get('contacts', [ZohoAPIController::class, 'getContacts']);
+//task actions
+Route::post('contact', [ZohoAPIController::class, 'addContact']);
+Route::post('deal', [ZohoAPIController::class, 'addDeal']);
+
+//just if you want to login.
+Route::get('login', [ZohoAPIController::class, 'doZohoLogin']);
+
+//auth actions
 Route::get('logout', [ZohoAPIController::class, 'doZohoLogout']);
 Route::get('refresh-token', [ZohoAPIController::class, 'refreshAccessToken']);

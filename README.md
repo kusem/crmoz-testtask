@@ -1,66 +1,50 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Initial tasks:
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+0) Register a Zoho CRM trial account;
 
-## About Laravel
+   <h3>Using Laravel or Deluge:</h3>
+1) Connect via Zoho CRM API;
+2) Create an entry in the Contacts module in Zoho CRM;
+3) Create an entry in the Deals (Potentials) module associated with an entry in Contacts.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## What is implemented
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+0. Create Zoho account - <b>done</b>
+1. Connect to Zoho using Laravel - <b>done (Guzzle)</b>
+2. Create an entry in the Contacts - <b>done (Guzzle POST request)</b>
+2. Create an entry in the Deals module associated with an entry in Contacts - <b>done (Guzzle POST request)</b>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## How does it work
 
-## Learning Laravel
+1. We've class ZohoAPIController which has Constructor inside. That constructor cares about our login state - so before initializing any action, we'l have access token (which would be automatically refreshed if needed)
+2. Separate actions could be called using API. You can find endpoints description below.
+3. I used session() helper to save user data between requests. As for me, for this task it was more simple than using DB.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Endpoints
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+<h5>Task actions</h5>
+- **[add contact](/api/contact)** [POST]. You can set some params if you want, but system has randomizer so you can call endpoint w/o any additional actions.
+- **[add deal](/api/deal)** [POST]. You can set some params if you want, but system has randomizer so you can call endpoint w/o any additional actions.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<h5>Auth</h5>
+- **[login](/api/login)** [GET]. Just login to the system. You do not have to run it manually - system runs it in constructor if it's needed.
+- **[logout](/api/logout)** [GET]. If you change scopes - you have to logout.
+- **[refresh-access-token](/api/refresh-token)** [GET]. Same as login - you do not have to run it manually, __constructor will do all the job.
 
-## Laravel Sponsors
+## How to run the system
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+0. Pull this repo
+1. Run <code>composer install</code>
+2. **[Create <b>Self client</b>](https://api-console.zoho.com/)** with scopes <b>ZohoCRM.modules.Contacts.ALL, ZohoCRM.modules.Deals.ALL</b>  
+3. Create .env file (copy it from .env.example) and specify <b>ZOHO_API_CLIENT_ID</b>, <b>ZOHO_API_CLIENT_SECRET</b>, <b>ZOHO_API_CLIENT_TOKEN</b> 
+4. Run server. For example, using command <code>php artisan serve</code>
+5. Choose any endpoint and have fun ;)
 
-### Premium Partners
+P.S. If you want to change Scopes - just go to 
+P.P.S. You will need some tool like Postman for using the system (to send POST requests).
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+## Problems I faced with
 
-## Contributing
+1. Had a problem with auth, so the system didn't give me access_token, constantly returned undocumented error. The solution was creation of a new account. Seems like some internal bug.
+2. Thanks god there's no task about getting lists from the system - as
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
