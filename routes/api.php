@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ZohoAPIController;
+use App\Http\Controllers\ZohoContactController;
+use App\Http\Controllers\ZohoDealController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,8 +23,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 //task actions
-Route::post('contact', [ZohoAPIController::class, 'addContact']);
-Route::post('deal', [ZohoAPIController::class, 'addDeal']);
+Route::post('contact', [ZohoContactController::class, 'addContact']);
+Route::post('deal', [ZohoDealController::class, 'addDeal']);
 
 //just if you want to login.
 Route::get('login', [ZohoAPIController::class, 'doZohoLogin']);
