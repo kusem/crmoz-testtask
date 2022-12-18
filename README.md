@@ -24,13 +24,13 @@
 ### Endpoints
 
 <h5>Task actions</h5>
-- <b>add contact</b> - (/api/contact) <i>[POST]</i>. You can set some params if you want, but system has randomizer so you can call endpoint w/o any additional actions.
+- <b>add contact</b> - (/api/contact) <i>[POST]</i>. You can set some params if you want, but system has randomizer so you can call endpoint w/o any additional actions. <br>
 - <b>add deal</b> - (/api/deal) <i>[POST]</i>. You can set some params if you want, but system has randomizer so you can call endpoint w/o any additional actions.
 
 <h5>Auth</h5>
-- <b>[login](/api/login)</b> <i>[GET]</i>. Just login to the system. You do not have to run it manually - system runs it in constructor if it's needed.
-- <b>[logout](/api/logout)</b> <i>[GET]</i>. If you change scopes - you have to logout.
-- <b>[refresh-access-token](/api/refresh-token)</b> <i>[GET]</i>. Same as login - you do not have to run it manually, __constructor will do all the job.
+- <b>[login](/api/login)</b> <i>[GET]</i>. Just login to the system. You do not have to run it manually - system runs it in constructor if it's needed.<br>
+- <b>[logout](/api/logout)</b> <i>[GET]</i>. If you change scopes - you have to logout.<br>
+- <b>[refresh-access-token](/api/refresh-token)</b> <i>[GET]</i>. Same as login - you do not have to run it manually, __constructor will do all the job.<br>
 
 ## How to run the system
 
@@ -41,7 +41,7 @@
 4. Run server. For example, using command <code>php artisan serve</code>
 5. Choose any endpoint and have fun ;)
 
-P.S. If you want to change Scopes - you'll have to change ZOHO_API_CLIENT_TOKEN in .env file and [GET] api/logout to clear stored token. 
+P.S. If you want to change Scopes - you'll have to change ZOHO_API_CLIENT_TOKEN in .env file and [GET] api/logout to clear stored token. <br>
 P.P.S. You will need some tool like Postman for access endpoints (to send POST requests).
 
 ## Problems I faced with
